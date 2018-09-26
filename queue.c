@@ -40,7 +40,7 @@ void q_free(queue_t *q)
 
     list_ele_t *ptr;
     while (q->head) {
-        free(q->head->value);
+        // free(q->head->value);
         ptr = q->head;
         q->head = q->head->next;
         free(ptr);
@@ -48,6 +48,7 @@ void q_free(queue_t *q)
 
     /* How about freeing the list elements and the strings? */
     /* Free queue structure */
+    q->iSize = 0;
     free(q);
 }
 
@@ -76,6 +77,9 @@ bool q_insert_head(queue_t *q, char *s)
        Ans: strdup returns NULL when failed.*/
     newh->next = q->head;
     q->head = newh;
+    if (!q->tail)
+        q->tail = newh;
+    q->iSize++;
     return true;
 }
 
@@ -91,16 +95,33 @@ bool q_insert_tail(queue_t *q, char *s)
 {
     /* You need to write the complete code for this function */
     /* Remember: It should operate in O(1) time */
-    return false;
+    list_ele_t *newh;
+
+    if (!q)
+        return false;
+
+    newh = malloc(sizeof(list_ele_t));
+    if (!newh)
+        return false;
+    newh->next = NULL;
+
+    newh->value = strdup(s);
+    if (q->tail)
+        q->tail->next = newh;
+    q->tail = newh;
+    if (!q->head)
+        q->head = newh;
+    q->iSize++;
+    return true;
 }
 
 /*
-  Attempt to remove element from head of queue.
-  Return true if successful.
-  Return false if queue is NULL or empty.
-  If sp is non-NULL and an element is removed, copy the removed string to *sp
-  (up to a maximum of bufsize-1 characters, plus a null terminator.)
-  The space used by the list element and the string should be freed.
+  At tempt to remove element from head of queue.
+  Re turn true if successful.
+  Re turn false if queue is NULL or empty.
+  If  sp is non-NULL and an element is removed, copy the removed string to *sp
+  (u p to a maximum of bufsize-1 characters, plus a null terminator.)
+  Th e space used by the list element and the string should be freed.
 */
 bool q_remove_head(queue_t *q, char *sp, size_t bufsize)
 {
@@ -111,12 +132,15 @@ bool q_remove_head(queue_t *q, char *sp, size_t bufsize)
     if (sp && q->head->value) {
         strncpy(sp, q->head->value, bufsize - 1);
         sp[bufsize - 1] = '\0';
-        free(q->head->value);
+        // free(q->head->value);
     }
 
     list_ele_t *ptr = q->head;
     q->head = q->head->next;
+    if (!q->head)
+        q->tail = NULL;
     free(ptr);
+    q->iSize--;
     return true;
 }
 
@@ -140,5 +164,25 @@ int q_size(queue_t *q)
  */
 void q_reverse(queue_t *q)
 {
+    if (!q || !q->head)
+        return;
+
+    list_ele_t *ori_head, *ori_tail;
+    list_ele_t *cur = q->head, *next = q->head->next, *prev;
+
+    ori_head = q->head;
+    ori_tail = q->tail;
+
+    while (next) {
+        prev = cur;
+        cur = next;
+        next = next->next;
+        cur->next = prev;
+    }
+
+    q->head = ori_tail;
+    q->tail = ori_head;
+    q->tail->next = NULL;
+
     /* You need to write the code for this function */
 }
