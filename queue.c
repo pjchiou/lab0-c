@@ -156,5 +156,16 @@ void q_reverse(queue_t *q)
 {
     if (!q || list_empty(&q->entry))
         return;
+    struct list_head *node, *safe, *temp;
 
+    list_for_each_safe(node, safe, &q->entry)
+    {
+        temp = node->next;
+        node->next = node->prev;
+        node->prev = temp;
+    }
+
+    temp = q->entry.next;
+    q->entry.next = q->entry.prev;
+    q->entry.prev = temp;
 }

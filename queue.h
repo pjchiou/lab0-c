@@ -17,12 +17,12 @@
 /************** Data structure declarations ****************/
 
 /* Linked list element (You shouldn't need to change this) */
-typedef struct ELE {
-    /* Pointer to array holding string.
-       This array needs to be explicitly allocated and freed */
-    char *value;
-    struct ELE *next;
-} list_ele_t;
+// typedef struct ELE {
+/* Pointer to array holding string.
+   This array needs to be explicitly allocated and freed */
+//  char *value;
+// struct ELE *next;
+//} list_ele_t;
 
 /* Queue structure */
 typedef struct {
