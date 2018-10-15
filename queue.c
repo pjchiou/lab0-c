@@ -27,7 +27,7 @@ queue_t *q_new()
     queue_t *q = malloc(sizeof(queue_t));
     if (!q)
         return (NULL);
-    q->head = q->tail = NULL;
+    INIT_LIST_HEAD(&q->entry);
     q->iSize = 0;
     return q;
 }
@@ -35,15 +35,14 @@ queue_t *q_new()
 /* Free all storage used by queue */
 void q_free(queue_t *q)
 {
+    struct list_head *node, *safe;
     if (!q)
         return;
 
-    list_ele_t *ptr;
-    while (q->head) {
-        free(q->head->value);
-        ptr = q->head;
-        q->head = q->head->next;
-        free(ptr);
+    list_for_each_safe(node, safe, &q->entry)
+    {
+        free(container_of(node, queue_t, entry)->value);
+        free(container_of(node, queue_t, entry));
     }
 
     q->iSize = 0;
@@ -59,29 +58,22 @@ void q_free(queue_t *q)
  */
 bool q_insert_head(queue_t *q, char *s)
 {
-    list_ele_t *newh;
-    int iStringSize = 0;
+    queue_t *newh;
     if (!q)
         return false;
 
-    newh = malloc(sizeof(list_ele_t));
+    newh = malloc(sizeof(queue_t));
     if (!newh)
         return false;
 
-    while (s && s[iStringSize++] != '\0')
-        ;
-    newh->value = malloc(sizeof(char) * iStringSize);
+    newh->value = malloc(sizeof(char) * strlen(s) + 1);
     if (!newh->value) {
         free(newh);
         return false;
     }
-    for (int i = 0; i < iStringSize; i++)
-        newh->value[i] = s[i];
+    strcpy(newh->value, s);
 
-    newh->next = q->head;
-    q->head = newh;
-    if (!q->tail)
-        q->tail = newh;
+    list_add(&newh->entry, &q->entry);
     q->iSize++;
     return true;
 }
@@ -96,32 +88,23 @@ bool q_insert_head(queue_t *q, char *s)
  */
 bool q_insert_tail(queue_t *q, char *s)
 {
-    list_ele_t *newh;
-    int iStringSize = 0;
+    queue_t *newh;
 
     if (!q)
         return false;
 
-    newh = malloc(sizeof(list_ele_t));
+    newh = malloc(sizeof(queue_t));
     if (!newh)
         return false;
-    newh->next = NULL;
 
-    while (s && s[iStringSize++] != '\0')
-        ;
-    newh->value = malloc(sizeof(char) * iStringSize);
+    newh->value = malloc(sizeof(char) * strlen(s) + 1);
     if (!newh->value) {
         free(newh);
         return false;
     }
-    for (int i = 0; i < iStringSize; i++)
-        newh->value[i] = s[i];
+    strcpy(newh->value, s);
 
-    if (q->tail)
-        q->tail->next = newh;
-    q->tail = newh;
-    if (!q->head)
-        q->head = newh;
+    list_add_tail(&newh->entry, &q->entry);
     q->iSize++;
     return true;
 }
@@ -137,20 +120,18 @@ bool q_insert_tail(queue_t *q, char *s)
 bool q_remove_head(queue_t *q, char *sp, size_t bufsize)
 {
     /* You need to fix up this code. */
-    if (!q || !q->head)
+    if (!q || list_empty(&q->entry))
         return (false);
+    struct list_head *first = q->entry.next;
 
-    if (sp && q->head->value) {
-        strncpy(sp, q->head->value, bufsize - 1);
+    if (sp && container_of(first, queue_t, entry)->value) {
+        strncpy(sp, container_of(first, queue_t, entry)->value, bufsize - 1);
         sp[bufsize - 1] = '\0';
     }
 
-    list_ele_t *ptr = q->head;
-    q->head = q->head->next;
-    if (!q->head)
-        q->tail = NULL;
-    free(ptr->value);
-    free(ptr);
+    list_del(first);
+    free(container_of(first, queue_t, entry)->value);
+    free(container_of(first, queue_t, entry));
     q->iSize--;
     return true;
 }
@@ -173,23 +154,7 @@ int q_size(queue_t *q)
  */
 void q_reverse(queue_t *q)
 {
-    if (!q || !q->head)
+    if (!q || list_empty(&q->entry))
         return;
 
-    list_ele_t *ori_head, *ori_tail;
-    list_ele_t *cur = q->head, *next = q->head->next, *prev;
-
-    ori_head = q->head;
-    ori_tail = q->tail;
-
-    while (next) {
-        prev = cur;
-        cur = next;
-        next = next->next;
-        cur->next = prev;
-    }
-
-    q->head = ori_tail;
-    q->tail = ori_head;
-    q->tail->next = NULL;
 }
